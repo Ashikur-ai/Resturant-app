@@ -1,17 +1,55 @@
 import Swal from "sweetalert2";
 import useAuth from "../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 
 const FoodCard = ({ item }) => {
-    const { name, image, price, recipe } = item;
+    const { name, image, price, recipe, _id } = item;
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleAddCart = (item) => {
         
         if (user && user?.email) {
-            // add to database 
+            // add to database
+
+            const cartItem = {
+                menuId: _id,
+                email: user.email,
+                name,
+                image,
+                price
+            }
+            axios.post('http://localhost:5000/carts', cartItem)
+                .then(res => {
+                    console.log(res.data)
+                    if (res.data.insertedId) {
+                        let timerInterval;
+                        Swal.fire({
+                            title: `${name} added to your cart`,
+                            html: "",
+                            timer: 2000,
+                            timerProgressBar: true,
+                            didOpen: () => {
+                                Swal.showLoading();
+                                const timer = Swal.getPopup().querySelector("b");
+                                timerInterval = setInterval(() => {
+                                    timer.textContent = `${Swal.getTimerLeft()}`;
+                                }, 100);
+                            },
+                            willClose: () => {
+                                clearInterval(timerInterval);
+                            }
+                        }).then((result) => {
+                            /* Read more about handling dismissals below */
+                            if (result.dismiss === Swal.DismissReason.timer) {
+                                console.log("I was closed by the timer");
+                            }
+                        });
+                    }
+            })
         }
         else {
             Swal.fire({
@@ -25,7 +63,7 @@ const FoodCard = ({ item }) => {
             }).then((result) => {
                 if (result.isConfirmed) {
                     // send the user to the login page 
-                    navigate('/login')
+                    navigate('/login', {state: {from: location}})
                 }
             });
         }

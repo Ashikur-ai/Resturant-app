@@ -11,7 +11,7 @@ const Login = () => {
     const { signIn } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
-    const form = location.state?.from?.pathname || "/";
+    const from = location.state?.from?.pathname || "/";
 
     useEffect(() => {
         loadCaptchaEnginge(6);
@@ -28,7 +28,7 @@ const Login = () => {
             .then(result => {
                 const user = result.user;
                 console.log(user);
-                navigate(form, { replace: true });
+                navigate(from, { replace: true });
                 Swal.fire({
                     position: "top-end",
                     icon: "success",
