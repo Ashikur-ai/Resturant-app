@@ -28,7 +28,7 @@ const Login = () => {
             .then(result => {
                 const user = result.user;
                 console.log(user);
-                navigate(from, { replace: true });
+                navigate(form, { replace: true });
                 Swal.fire({
                     position: "top-end",
                     icon: "success",
