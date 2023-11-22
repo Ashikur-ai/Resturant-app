@@ -3,6 +3,8 @@ import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import useCart from '../../../hooks/useCart';
 import useAuth from '../../../hooks/useAuth';
+import Swal from 'sweetalert2';
+import { useNavigate } from "react-router-dom";
 
 const CheckOut = () => {
     const [error, setError] = useState('');
@@ -12,15 +14,18 @@ const CheckOut = () => {
     const axiosSecure = useAxiosSecure();
     const [transactionId, setTransactionId] = useState('');
     const { user } = useAuth();
-    const [cart] = useCart();
+    const [cart, refetch] = useCart();
+    const navigate = useNavigate();
     const totalPrice = cart.reduce((total, item) => total + item.price, 0)
 
     useEffect(() => {
-        axiosSecure.post('/create-payment-intent', { price: totalPrice })
-            .then(res => {
-                console.log(res.data.clientSecret);
-                setClientSecret(res.data.clientSecret);
-        })
+        if (totalPrice > 0) {
+            axiosSecure.post('/create-payment-intent', { price: totalPrice })
+                .then(res => {
+                    console.log(res.data.clientSecret);
+                    setClientSecret(res.data.clientSecret);
+                })
+        }
     }, [axiosSecure, totalPrice])
 
     const handleSubmit = async (event) => {
@@ -81,7 +86,18 @@ const CheckOut = () => {
                 }
 
                 const res = await axiosSecure.post('/payments', payment);
-                console.log('payment saved', res.data)
+                console.log('payment saved', res.data);
+                refetch();
+                if (res.data?.paymentResult?.insertedId) {
+                    Swal.fire({
+                        position: "top-end",
+                        icon: "success",
+                        title: "Thanks for your payment",
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    navigate('/dashboard/paymentHistory')
+                }
             }
         }
     }
